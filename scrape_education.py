@@ -5,14 +5,25 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
+# Load dataset
 df = pd.read_excel('US Congress (2).xlsx', sheet_name=0)
 
 def clean_text(val):
     if isinstance(val, str):
-        return re.sub(r'[\x00-\x08\x0B-\x0C\x0E-\x1F]', '', val)
+        # Remove non-printable control characters
+        val = re.sub(r'[\x00-\x08\x0B-\x0C\x0E-\x1F]', '', val)
+        return val.strip()
     return val
 
-# Strict pattern matching specific degrees and educational institutions
+# Standardize religion strings (removes duplicates, trailing spaces, casing)
+if 'Religious_Terms' in df.columns:
+    df['Religious_Terms'] = df['Religious_Terms'].apply(clean_text)
+    df['Religious_Terms'] = df['Religious_Terms'].replace({
+        'Lds': 'LDS', 
+        'LDS ': 'LDS',
+        '': 'NOT LISTED'
+    })
+
 DEGREE_PATTERN = re.compile(
     r'\b(?:B\.?A\.?|B\.?S\.?|M\.?A\.?|M\.?S\.?|J\.?D\.?|Ph\.?D\.?|M\.?B\.?A\.?|Bachelor|Master|Doctorate|Juris Doctor)\b'
     r'[^.\n,;]*?(?:University|College|School|Institute|State|Academy|Law School)[^.\n,;]*',
@@ -36,7 +47,6 @@ def extract_education(url):
         soup = BeautifulSoup(response.text, 'html.parser')
         text = soup.get_text(separator=' ')
         
-        # Find strict degree and college matches
         matches = DEGREE_PATTERN.findall(text)
         if not matches:
             matches = COLLEGE_PATTERN.findall(text)
@@ -49,7 +59,7 @@ def extract_education(url):
         pass
     return 'NOT LISTED'
 
-print("Running refined degree extractor...")
+print("Scraping education details and cleaning religious terms...")
 urls = df['Bio_URL'].tolist()
 
 with ThreadPoolExecutor(max_workers=25) as executor:
@@ -57,8 +67,11 @@ with ThreadPoolExecutor(max_workers=25) as executor:
 
 df['Education'] = results
 
+# Clean all string columns in dataframe
 for col in df.columns:
     df[col] = df[col].apply(clean_text)
 
+# Save to data.json and updated Excel file
 df.fillna('NOT LISTED').to_json('data.json', orient='records', indent=2)
-print("Updated data.json with clean degree records!")
+df.to_excel('US_Congress_Updated.xlsx', index=False)
+print("Done! Cleaned dataset saved to data.json and US_Congress_Updated.xlsx.")
