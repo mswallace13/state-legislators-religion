@@ -179,7 +179,13 @@
               return `<span class="badge badge-independent">${data || 'Other'}</span>`;
             }
           },
-          { data: 'Religious_Terms', defaultContent: 'NOT LISTED' },
+          { 
+            data: 'Religious_Terms', 
+            defaultContent: 'NOT LISTED',
+            render: function(data) {
+              return data ? data.trim() : 'NOT LISTED';
+            }
+          },
           { 
             data: 'Education', 
             defaultContent: 'NOT LISTED',
@@ -205,12 +211,25 @@
         initComplete: function() {
           var api = this.api();
           
-          api.column(0).data().unique().sort().each(function(d) {
-            if (d) $('#stateFilter').append(`<option value="${d}">${d}</option>`);
+          // Populate States
+          var states = [];
+          api.column(0).data().each(function(d) {
+            if (d && !states.includes(d.trim())) states.push(d.trim());
+          });
+          states.sort().forEach(function(d) {
+            $('#stateFilter').append(`<option value="${d}">${d}</option>`);
           });
 
-          api.column(5).data().unique().sort().each(function(d) {
-            if (d) $('#religionFilter').append(`<option value="${d}">${d}</option>`);
+          // Populate Deduplicated Religions
+          var religions = [];
+          api.column(5).data().each(function(d) {
+            var clean = d ? d.trim() : 'NOT LISTED';
+            if (clean && !religions.includes(clean)) {
+              religions.push(clean);
+            }
+          });
+          religions.sort().forEach(function(d) {
+            $('#religionFilter').append(`<option value="${d}">${d}</option>`);
           });
         }
       });
@@ -244,7 +263,7 @@
       $('#modalChamber').text(row.Chamber || 'N/A');
       $('#modalDistrict').text(row.District || 'N/A');
       $('#modalParty').text(partyDisplay);
-      $('#modalReligion').text(row.Religious_Terms || 'NOT LISTED');
+      $('#modalReligion').text(row.Religious_Terms ? row.Religious_Terms.trim() : 'NOT LISTED');
       $('#modalEducation').text(row.Education || 'NOT LISTED');
       
       if (row.Bio_URL) {
