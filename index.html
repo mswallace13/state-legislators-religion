@@ -3,72 +3,255 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>State Legislators Database</title>
+  <title>State Legislators Religion & Education Database</title>
   
+  <!-- Bootstrap 5 CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <!-- DataTables Bootstrap 5 CSS -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    body { padding: 2rem; background-color: #f8f9fa; }
-    .container-fluid { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-    h1 { margin-bottom: 0.5rem; color: #2c3e50; }
-    table.dataTable td { vertical-align: middle; max-width: 300px; word-wrap: break-word; }
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 3rem; }
+    .hero-header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; padding: 2.5rem 0; margin-bottom: 2rem; border-bottom: 4px solid #3b82f6; }
+    .hero-title { font-weight: 700; letter-spacing: -0.5px; }
+    .card-filter { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .table-container { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    
+    /* Badges */
+    .badge-democrat { background-color: #2563eb; color: white; }
+    .badge-republican { background-color: #dc2626; color: white; }
+    .badge-independent { background-color: #64748b; color: white; }
+    .badge-chamber { background-color: #e2e8f0; color: #334155; font-weight: 600; text-transform: capitalize; }
+    
+    /* Truncated Text */
+    .text-truncate-custom {
+      max-width: 250px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    /* DataTables Custom Overrides */
+    table.dataTable tbody td { vertical-align: middle; }
+    .btn-view-more { padding: 0.2rem 0.6rem; font-size: 0.8rem; border-radius: 6px; }
   </style>
 </head>
 <body>
 
-<div class="container-fluid">
-  <h1>State Legislators Religion & Education Database</h1>
-  <p class="text-muted">Search by state, religion, party, legislator name, or education.</p>
-  <hr>
+  <!-- Header -->
+  <div class="hero-header text-center">
+    <div class="container">
+      <h1 class="hero-title"><i class="fa-solid fa-building-columns me-2"></i>State Legislators Database</h1>
+      <p class="lead mb-0 text-light opacity-75">Interactive Directory of Religion, Education & Party Affiliations</p>
+    </div>
+  </div>
 
-  <table id="legislatorsTable" class="table table-striped table-hover style="width:100%">
-    <thead>
-      <tr>
-        <th>State</th>
-        <th>Name</th>
-        <th>Chamber</th>
-        <th>District</th>
-        <th>Party</th>
-        <th>Religious Terms</th>
-        <th>Education</th>
-        <th>Bio Link</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
+  <div class="container-fluid px-4">
+    
+    <!-- Filter Bar -->
+    <div class="card card-filter p-3 mb-4">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-bold text-secondary small"><i class="fa-solid fa-map-location-dot me-1"></i> Filter by State</label>
+          <select id="stateFilter" class="form-select">
+            <option value="">All States</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold text-secondary small"><i class="fa-solid fa-users me-1"></i> Filter by Party</label>
+          <select id="partyFilter" class="form-select">
+            <option value="">All Parties</option>
+            <option value="Democratic">Democratic</option>
+            <option value="Republican">Republican</option>
+            <option value="Independent">Independent</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold text-secondary small"><i class="fa-solid fa-hands-praying me-1"></i> Filter by Religion</label>
+          <select id="religionFilter" class="form-select">
+            <option value="">All Religions</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button id="resetFilters" class="btn btn-outline-secondary w-100"><i class="fa-solid fa-rotate me-1"></i> Reset Filters</button>
+        </div>
+      </div>
+    </div>
 
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Main Table Container -->
+    <div class="table-container">
+      <table id="legislatorsTable" class="table table-hover style="width:100%">
+        <thead>
+          <tr>
+            <th>State</th>
+            <th>Name</th>
+            <th>Chamber</th>
+            <th>District</th>
+            <th>Party</th>
+            <th>Religious Terms</th>
+            <th>Education</th>
+            <th>Bio</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-<script>
-  $(document).ready(function() {$('#legislatorsTable').DataTable({
-      ajax: {
-        url: 'data.json',
-        dataSrc: ''
-      },
-      columns: [
-        { data: 'State', defaultContent: '' },
-        { data: 'Name', defaultContent: '' },
-        { data: 'Chamber', defaultContent: '' },
-        { data: 'District', defaultContent: '' },
-        { data: 'Party', defaultContent: '' },
-        { data: 'Religious_Terms', defaultContent: '' },
-        { data: 'Education', defaultContent: 'NOT LISTED' },
-        { 
-          data: 'Bio_URL',
-          defaultContent: '',
-          render: function(data) {
-            return data ? `<a href="${data}" target="_blank" rel="noopener">Bio Link</a>` : '';
+  <!-- Detail Modal Popup -->
+  <div class="modal fade" id="infoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title" id="modalName">Legislator Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>State:</strong> <span id="modalState"></span><br>
+              <strong>Chamber:</strong> <span id="modalChamber"></span><br>
+              <strong>District:</strong> <span id="modalDistrict"></span>
+            </div>
+            <div class="col-md-6">
+              <strong>Party:</strong> <span id="modalParty"></span><br>
+              <strong>Religious Terms:</strong> <span id="modalReligion"></span>
+            </div>
+          </div>
+          <hr>
+          <div class="mb-3">
+            <h6><i class="fa-solid fa-graduation-cap me-1"></i> Education & Background</h6>
+            <div id="modalEducation" class="p-3 bg-light rounded border text-wrap"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a id="modalBioLink" href="#" target="_blank" class="btn btn-primary btn-sm"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Official Website</a>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Libraries -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+  <script>
+    $(document).ready(function() {
+      var table = $('#legislatorsTable').DataTable({
+        ajax: {
+          url: 'data.json',
+          dataSrc: ''
+        },
+        columns: [
+          { data: 'State', defaultContent: '' },
+          { 
+            data: 'Name', 
+            defaultContent: '',
+            render: function(data) {
+              return `<strong>${data}</strong>`;
+            }
+          },
+          { 
+            data: 'Chamber', 
+            defaultContent: '',
+            render: function(data) {
+              return `<span class="badge badge-chamber">${data}</span>`;
+            }
+          },
+          { data: 'District', defaultContent: '' },
+          { 
+            data: 'Party', 
+            defaultContent: '',
+            render: function(data) {
+              if (data.includes('Democrat')) return `<span class="badge badge-democrat">Democrat</span>`;
+              if (data.includes('Republican')) return `<span class="badge badge-republican">Republican</span>`;
+              return `<span class="badge badge-independent">${data || 'Other'}</span>`;
+            }
+          },
+          { data: 'Religious_Terms', defaultContent: 'NOT LISTED' },
+          { 
+            data: 'Education', 
+            defaultContent: 'NOT LISTED',
+            render: function(data, type, row) {
+              if (!data || data === 'NOT LISTED') return '<span class="text-muted">NOT LISTED</span>';
+              if (data.length > 50) {
+                return `<span class="text-truncate-custom" title="${data}">${data}</span> 
+                        <button class="btn btn-outline-primary btn-view-more ms-1" onclick='openModal(${JSON.stringify(row).replace(/'/g, "&apos;")})'>More</button>`;
+              }
+              return data;
+            }
+          },
+          { 
+            data: 'Bio_URL',
+            defaultContent: '',
+            render: function(data) {
+              return data ? `<a href="${data}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-link"></i> Link</a>` : '';
+            }
           }
+        ],
+        pageLength: 25,
+        responsive: true,
+        initComplete: function() {
+          // Populate Dropdowns dynamically from loaded JSON data
+          var api = this.api();
+          
+          // Populate States
+          api.column(0).data().unique().sort().each(function(d) {
+            if (d) $('#stateFilter').append(`<option value="${d}">${d}</option>`);
+          });
+
+          // Populate Religion
+          api.column(5).data().unique().sort().each(function(d) {
+            if (d && d !== 'NOT LISTED') $('#religionFilter').append(`<option value="${d}">${d}</option>`);
+          });
         }
-      ],
-      pageLength: 25,
-      responsive: true
+      });
+
+      // Filter Handlers
+      $('#stateFilter').on('change', function() {
+        table.column(0).search(this.value).draw();
+      });
+
+      $('#partyFilter').on('change', function() {
+        table.column(4).search(this.value).draw();
+      });
+
+      $('#religionFilter').on('change', function() {
+        table.column(5).search(this.value).draw();
+      });
+
+      $('#resetFilters').on('click', function() {
+        $('#stateFilter, #partyFilter, #religionFilter').val('');
+        table.columns().search('').draw();
+      });
     });
-  });
-</script>
+
+    // Helper to populate and open modal
+    function openModal(row) {
+      $('#modalName').text(row.Name || 'Legislator Details');
+      $('#modalState').text(row.State || 'N/A');
+      $('#modalChamber').text(row.Chamber || 'N/A');
+      $('#modalDistrict').text(row.District || 'N/A');
+      $('#modalParty').text(row.Party || 'N/A');
+      $('#modalReligion').text(row.Religious_Terms || 'NOT LISTED');
+      $('#modalEducation').text(row.Education || 'NOT LISTED');
+      
+      if (row.Bio_URL) {
+        $('#modalBioLink').attr('href', row.Bio_URL).show();
+      } else {
+        $('#modalBioLink').hide();
+      }
+      
+      var myModal = new bootstrap.Modal(document.getElementById('infoModal'));
+      myModal.show();
+    }
+  </script>
 </body>
 </html>
