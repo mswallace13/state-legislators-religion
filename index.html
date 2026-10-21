@@ -65,7 +65,7 @@
           <label class="form-label fw-bold text-secondary small"><i class="fa-solid fa-users me-1"></i> Filter by Party</label>
           <select id="partyFilter" class="form-select">
             <option value="">All Parties</option>
-            <option value="Democratic">Democratic</option>
+            <option value="Democrat">Democrat</option>
             <option value="Republican">Republican</option>
             <option value="Independent">Independent</option>
           </select>
@@ -84,7 +84,7 @@
 
     <!-- Main Table Container -->
     <div class="table-container">
-      <table id="legislatorsTable" class="table table-hover style="width:100%">
+      <table id="legislatorsTable" class="table table-hover" style="width:100%">
         <thead>
           <tr>
             <th>State</th>
@@ -199,7 +199,6 @@
         pageLength: 25,
         responsive: true,
         initComplete: function() {
-          // Populate Dropdowns dynamically from loaded JSON data
           var api = this.api();
           
           // Populate States
@@ -207,9 +206,9 @@
             if (d) $('#stateFilter').append(`<option value="${d}">${d}</option>`);
           });
 
-          // Populate Religion
+          // Populate Religion (including NOT LISTED)
           api.column(5).data().unique().sort().each(function(d) {
-            if (d && d !== 'NOT LISTED') $('#religionFilter').append(`<option value="${d}">${d}</option>`);
+            if (d) $('#religionFilter').append(`<option value="${d}">${d}</option>`);
           });
         }
       });
@@ -220,11 +219,13 @@
       });
 
       $('#partyFilter').on('change', function() {
-        table.column(4).search(this.value).draw();
+        // Matches both Democrat and Democratic in data entries
+        var searchVal = this.value === 'Democrat' ? 'Democrat' : this.value;
+        table.column(4).search(searchVal).draw();
       });
 
       $('#religionFilter').on('change', function() {
-        table.column(5).search(this.value).draw();
+        table.column(5).search(this.value ? '^' + this.value + '$' : '', true, false).draw();
       });
 
       $('#resetFilters').on('click', function() {
@@ -233,13 +234,15 @@
       });
     });
 
-    // Helper to populate and open modal
+    // Modal Details Helper
     function openModal(row) {
+      var partyDisplay = row.Party && row.Party.includes('Democrat') ? 'Democrat' : (row.Party || 'N/A');
+      
       $('#modalName').text(row.Name || 'Legislator Details');
       $('#modalState').text(row.State || 'N/A');
       $('#modalChamber').text(row.Chamber || 'N/A');
       $('#modalDistrict').text(row.District || 'N/A');
-      $('#modalParty').text(row.Party || 'N/A');
+      $('#modalParty').text(partyDisplay);
       $('#modalReligion').text(row.Religious_Terms || 'NOT LISTED');
       $('#modalEducation').text(row.Education || 'NOT LISTED');
       
