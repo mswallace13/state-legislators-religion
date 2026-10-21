@@ -19,6 +19,10 @@
     .card-filter { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     .table-container { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     
+    /* Column Width Restrictions */
+    .col-district { width: 70px !important; text-align: center; }
+    .col-state { width: 70px !important; text-align: center; }
+    
     /* Badges */
     .badge-democrat { background-color: #2563eb; color: white; }
     .badge-republican { background-color: #dc2626; color: white; }
@@ -87,10 +91,10 @@
       <table id="legislatorsTable" class="table table-hover" style="width:100%">
         <thead>
           <tr>
-            <th>State</th>
+            <th class="col-state">State</th>
             <th>Name</th>
             <th>Chamber</th>
-            <th>District</th>
+            <th class="col-district">District</th>
             <th>Party</th>
             <th>Religious Terms</th>
             <th>Education</th>
@@ -150,7 +154,7 @@
           dataSrc: ''
         },
         columns: [
-          { data: 'State', defaultContent: '' },
+          { data: 'State', defaultContent: '', className: 'col-state' },
           { 
             data: 'Name', 
             defaultContent: '',
@@ -165,7 +169,7 @@
               return `<span class="badge badge-chamber">${data}</span>`;
             }
           },
-          { data: 'District', defaultContent: '' },
+          { data: 'District', defaultContent: '', className: 'col-district' },
           { 
             data: 'Party', 
             defaultContent: '',
@@ -201,12 +205,10 @@
         initComplete: function() {
           var api = this.api();
           
-          // Populate States
           api.column(0).data().unique().sort().each(function(d) {
             if (d) $('#stateFilter').append(`<option value="${d}">${d}</option>`);
           });
 
-          // Populate Religion (including NOT LISTED)
           api.column(5).data().unique().sort().each(function(d) {
             if (d) $('#religionFilter').append(`<option value="${d}">${d}</option>`);
           });
@@ -219,7 +221,6 @@
       });
 
       $('#partyFilter').on('change', function() {
-        // Matches both Democrat and Democratic in data entries
         var searchVal = this.value === 'Democrat' ? 'Democrat' : this.value;
         table.column(4).search(searchVal).draw();
       });
